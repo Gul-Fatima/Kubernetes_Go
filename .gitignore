@@ -18,3 +18,4 @@ Thumbs.db
 # Results and logs
 *.log
 results/
+data/raw/
