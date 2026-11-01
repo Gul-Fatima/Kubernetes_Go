@@ -1,0 +1,14 @@
+{
+  "A10": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "A100": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "A30": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "A800": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "H20": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "H800": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "L20": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "XPU-A": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "XPU-B": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "XPU-C": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "XPU-D": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"},
+  "XPU-E": {"idle_power_w": 100, "cpu_dynamic_power_w": 100, "gpu_dynamic_power_w_per_gpu": 250, "memory_dynamic_power_w": 0, "source": "ILLUSTRATIVE_SMOKE_TEST_ONLY"}
+}

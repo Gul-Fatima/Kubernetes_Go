@@ -12,7 +12,7 @@ import (
 type ResourceCapacity struct {
 	CPUCores       float64 `json:"cpu_cores"`
 	MemoryBytes    int64   `json:"memory_bytes"`
-	GPUCount       int     `json:"gpu_count"`
+	GPUCount       float64 `json:"gpu_count"`
 	GPUMemoryBytes int64   `json:"gpu_memory_bytes"`
 }
 
@@ -107,7 +107,7 @@ func (s *Server) UpdateEnergy(util energy.Utilization, now time.Duration) error 
 	power, err := energy.EstimatePower(
 		s.PowerProfile,
 		util,
-		s.Capacity.GPUCount,
+		s.Hardware.GPUCount,
 	)
 	if err != nil {
 		return fmt.Errorf("server %s: %w", s.ID, err)
@@ -123,7 +123,7 @@ func (s *Server) UpdateEnergy(util energy.Utilization, now time.Duration) error 
 	estimate, err := energy.EstimateEnergy(
 		s.PowerProfile,
 		util,
-		s.Capacity.GPUCount,
+		s.Hardware.GPUCount,
 		elapsed,
 	)
 	if err != nil {
@@ -163,7 +163,8 @@ func (s *Server) AllocateWorkload(workload *Workload) error {
 	}
 
 	// Check GPU model compatibility.
-	if workload.Requirements.GPUModel != "" &&
+	if workload.Requirements.GPURequest > 0 &&
+		workload.Requirements.GPUModel != "" &&
 		workload.Requirements.GPUModel != s.Hardware.GPUModel {
 		return fmt.Errorf(
 			"server %s does not have the required GPU model",
@@ -230,9 +231,10 @@ func (s *Server) ReleaseWorkload(workload *Workload) error {
 	req := workload.Requirements
 
 	// Ensure resources can be safely released.
-	if s.Allocated.CPUCores < req.CPURequestCores ||
+	const epsilon = 1e-9
+	if s.Allocated.CPUCores+epsilon < req.CPURequestCores ||
 		s.Allocated.MemoryBytes < req.MemoryRequestBytes ||
-		s.Allocated.GPUCount < req.GPURequest ||
+		s.Allocated.GPUCount+epsilon < req.GPURequest ||
 		s.Allocated.GPUMemoryBytes < req.GPUMemoryBytes {
 		return fmt.Errorf(
 			"allocated resources are insufficient to release workload %s",

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: node-a
+  annotations:
+    eawsk.io/idle-power-w: "100"
+    eawsk.io/cpu-dynamic-power-w: "150"
+    eawsk.io/gpu-dynamic-power-w-per-gpu: "250"
+    eawsk.io/memory-dynamic-power-w: "30"
+    eawsk.io/power-source: "illustrative-test-profile"

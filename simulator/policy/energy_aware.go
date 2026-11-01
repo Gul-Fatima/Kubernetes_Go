@@ -81,7 +81,7 @@ func (p *EnergyAwarePolicy) Rank(
 		currentPower, err := energy.EstimatePower(
 			server.PowerProfile,
 			currentUtil,
-			capacity.GPUCount,
+			server.Hardware.GPUCount,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -94,7 +94,7 @@ func (p *EnergyAwarePolicy) Rank(
 		projectedEstimate, err := energy.EstimateEnergy(
 			server.PowerProfile,
 			projectedUtil,
-			capacity.GPUCount,
+			server.Hardware.GPUCount,
 			workload.ExecutionTime,
 		)
 		if err != nil {

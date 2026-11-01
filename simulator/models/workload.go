@@ -30,7 +30,7 @@ const (
 type WorkloadRequirements struct {
 	CPURequestCores    float64 `json:"cpu_request_cores"`
 	MemoryRequestBytes int64   `json:"memory_request_bytes"`
-	GPURequest         int     `json:"gpu_request"`
+	GPURequest         float64     `json:"gpu_request"`
 	GPUMemoryBytes     int64   `json:"gpu_memory_bytes"`
 
 	// Optional hardware compatibility requirement.

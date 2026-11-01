@@ -10,6 +10,9 @@ import (
 func TestUpdateEnergy(t *testing.T) {
 	server := Server{
 		ID: "server-1",
+		Hardware: HardwareSpec{
+			GPUCount: 2,
+		},
 		Capacity: ResourceCapacity{
 			CPUCores:    8,
 			MemoryBytes: 16 * 1024 * 1024 * 1024,

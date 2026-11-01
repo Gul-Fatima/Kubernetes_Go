@@ -14,8 +14,9 @@ import (
 type Simulation struct {
 	CurrentTime time.Duration
 
-	Servers   map[string]*models.Server
-	Workloads map[string]*models.Workload
+	Servers           map[string]*models.Server
+	ServersByGPUModel map[string][]*models.Server
+	Workloads         map[string]*models.Workload
 
 	Events *EventScheduler
 
@@ -28,10 +29,11 @@ type Simulation struct {
 // NewSimulation creates an initialized simulation instance.
 func NewSimulation() *Simulation {
 	return &Simulation{
-		CurrentTime: 0,
-		Servers:     make(map[string]*models.Server),
-		Workloads:   make(map[string]*models.Workload),
-		Events:      NewEventScheduler(),
+		CurrentTime:       0,
+		Servers:           make(map[string]*models.Server),
+		ServersByGPUModel: make(map[string][]*models.Server),
+		Workloads:         make(map[string]*models.Workload),
+		Events:            NewEventScheduler(),
 	}
 }
 
@@ -60,6 +62,11 @@ func (s *Simulation) AddServer(server *models.Server) error {
 	}
 
 	s.Servers[server.ID] = server
+	if server.Hardware.GPUModel != "" {
+		s.ServersByGPUModel[server.Hardware.GPUModel] = append(
+			s.ServersByGPUModel[server.Hardware.GPUModel], server,
+		)
+	}
 	return nil
 }
 
@@ -121,17 +128,20 @@ func (s *Simulation) FeasibleServers(
 
 	candidates := make([]*models.Server, 0)
 
-	for _, server := range s.Servers {
+	// GPU workloads inspect only servers with the exact required GPU model.
+	serverPool := make([]*models.Server, 0, len(s.Servers))
+	if workload.Requirements.GPURequest > 0 &&
+		workload.Requirements.GPUModel != "" {
+		serverPool = s.ServersByGPUModel[workload.Requirements.GPUModel]
+	} else {
+		for _, server := range s.Servers {
+			serverPool = append(serverPool, server)
+		}
+	}
+
+	for _, server := range serverPool {
 		if server == nil {
 			continue
-		}
-
-		if err := server.Validate(); err != nil {
-			return nil, fmt.Errorf(
-				"invalid server %s: %w",
-				server.ID,
-				err,
-			)
 		}
 
 		available := server.AvailableResources()
@@ -160,7 +170,8 @@ func (s *Simulation) FeasibleServers(
 			continue
 		}
 
-		if requirements.GPUModel != "" &&
+		if requirements.GPURequest > 0 &&
+			requirements.GPUModel != "" &&
 			requirements.GPUModel != server.Hardware.GPUModel {
 			continue
 		}
@@ -213,20 +224,42 @@ func (s *Simulation) Advance() (*Event, error) {
 // serverUtilization estimates utilization from allocated resource requests.
 // These are simulation estimates, not measured hardware utilization.
 func serverUtilization(server *models.Server) energy.Utilization {
-	util := energy.Utilization{
-		CPU: server.Allocated.CPUCores / server.Capacity.CPUCores,
+	const epsilon = 1e-9
+
+	normalize := func(allocated, capacity float64) float64 {
+		if capacity <= 0 {
+			return 0
+		}
+
+		util := allocated / capacity
+
+		// Correct negligible floating-point deviations only.
+		if util < 0 && util >= -epsilon {
+			return 0
+		}
+		if util > 1 && util <= 1+epsilon {
+			return 1
+		}
+		return util
 	}
 
-	// Only include memory utilization when capacity is known.
+	util := energy.Utilization{
+		CPU: normalize(server.Allocated.CPUCores, server.Capacity.CPUCores),
+	}
+
 	if server.Capacity.MemoryBytes > 0 {
-		util.Memory = float64(server.Allocated.MemoryBytes) /
-			float64(server.Capacity.MemoryBytes)
+		util.Memory = normalize(
+			float64(server.Allocated.MemoryBytes),
+			float64(server.Capacity.MemoryBytes),
+		)
 		util.MemoryKnown = true
 	}
 
 	if server.Capacity.GPUCount > 0 {
-		util.GPU = float64(server.Allocated.GPUCount) /
-			float64(server.Capacity.GPUCount)
+		util.GPU = normalize(
+			server.Allocated.GPUCount,
+			server.Capacity.GPUCount,
+		)
 	}
 
 	return util
@@ -275,17 +308,9 @@ func (s *Simulation) handleWorkloadArrival(event *Event) error {
 		return nil
 	}
 
-	// Build server lookup.
-	serverMap := make(map[string]*models.Server, len(s.Servers))
-	for _, server := range s.Servers {
-		if server != nil {
-			serverMap[server.ID] = server
-		}
-	}
-
 	// Try candidates in policy ranking order.
 	for _, candidate := range ranked {
-		server, exists := serverMap[candidate.ServerID]
+		server, exists := s.Servers[candidate.ServerID]
 		if !exists {
 			continue
 		}

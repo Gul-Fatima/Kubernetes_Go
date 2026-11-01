@@ -612,3 +612,80 @@ func TestEnergyAccountingWithOverlappingWorkloads(t *testing.T) {
 			server.Allocated.CPUCores)
 	}
 }
+func TestFractionalGPUAllocationAndRelease(t *testing.T) {
+	sim := NewSimulation()
+
+	if err := sim.SetPolicy(&policy.FirstFitPolicy{}); err != nil {
+		t.Fatal(err)
+	}
+
+	server := &models.Server{
+		ID: "gpu-server",
+		Capacity: models.ResourceCapacity{
+			CPUCores:    16,
+			MemoryBytes: 32 * 1024 * 1024 * 1024,
+			GPUCount:    2,
+		},
+		Hardware: models.HardwareSpec{
+			GPUCount: 2,
+		},
+	}
+
+	if err := sim.AddServer(server); err != nil {
+		t.Fatal(err)
+	}
+
+	workload := &models.Workload{
+		ID:            "fractional-gpu-pod",
+		ArrivalTime:   0,
+		ExecutionTime: time.Hour,
+		Requirements: models.WorkloadRequirements{
+			CPURequestCores: 2,
+			GPURequest:      0.5,
+		},
+		AI: models.AIWorkloadInfo{
+			Type: models.WorkloadTraining,
+		},
+	}
+
+	if err := sim.AddWorkload(workload); err != nil {
+		t.Fatal(err)
+	}
+
+	// Process arrival.
+	if _, err := sim.ProcessNextEvent(); err != nil {
+		t.Fatal(err)
+	}
+
+	if workload.State != models.StateRunning {
+		t.Fatalf("expected running state, got %s", workload.State)
+	}
+
+	if server.Allocated.GPUCount != 0.5 {
+		t.Fatalf("expected 0.5 GPU allocated, got %v", server.Allocated.GPUCount)
+	}
+
+	if server.AvailableResources().GPUCount != 1.5 {
+		t.Fatalf("expected 1.5 GPUs available, got %v",
+			server.AvailableResources().GPUCount)
+	}
+
+	// Process completion.
+	if _, err := sim.ProcessNextEvent(); err != nil {
+		t.Fatal(err)
+	}
+
+	if workload.State != models.StateCompleted {
+		t.Fatalf("expected completed state, got %s", workload.State)
+	}
+
+	if server.Allocated.GPUCount != 0 {
+		t.Fatalf("expected GPU allocation to return to 0, got %v",
+			server.Allocated.GPUCount)
+	}
+
+	if server.AvailableResources().GPUCount != 2 {
+		t.Fatalf("expected 2 GPUs available after completion, got %v",
+			server.AvailableResources().GPUCount)
+	}
+}
